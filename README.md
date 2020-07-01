@@ -1,4 +1,4 @@
-#FairScan.sh
+# FairScan.sh
 Written by C4l1b4n.
 (This is my username also on HackTheBox)
 
