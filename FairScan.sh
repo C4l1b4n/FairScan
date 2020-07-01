@@ -7,6 +7,7 @@
 # defalut wordlist for gobuster
 wordlist="/usr/share/wordlists/dirb/big.txt"
 stepbystep="0"
+force="0"
 
 #usage helper
 usage () {
@@ -16,16 +17,18 @@ usage () {
 	echo "Options: -w wordlist	Specify a wordlist for gobuster. (The default one is big.txt from dirb's lists)"
 	echo "	 -h		Show this helper"
 	echo "   	 -s		Step-by-step: it does first nmap scans, and then service port scans not in parallel, but one by one."
+	echo "   	 -f		Force-scans. It doesn't perform ping to check if the host is alive."
 	exit
 }
 #check correct order of parameters and assign $ip and $name
 check_parameters () {
-	while getopts "w:hs" flag; do
+	while getopts "w:hsf" flag; do
 	case "${flag}" in
 		w) temp_wordlist=$OPTARG;;
 		h) usage
 			exit;;
 		s) stepbystep="1";;
+		f) force="1";;
 		?) echo "Wrong parameters, use -h to show the helper"
 			exit;;
 	esac
@@ -73,10 +76,12 @@ check_w () {
 }
 #check if the host is alive
 host_alive () {
-	test_host=$(ping $ip -c 1 -W 3 | grep "1 received")
-	if test -z "$test_host" ; then
-		echo "[**] Oops, the target doesn't seem alive!" 1>&2
-		exit 1
+	if [[ $force -ne "1" ]] ; then
+		test_host=$(ping $ip -c 1 -W 3 | grep "1 received")
+		if test -z "$test_host" ; then
+			echo "[**] Oops, the target doesn't seem alive!" 1>&2
+			exit 1
+		fi
 	fi
 }
 #set the environment
@@ -95,6 +100,7 @@ quick_nmap () {
 	check=$(nmap -sS -T4 -p- $ip | grep " open " )
 	if [[ -z $check ]] ; then
 		echo "[**] The target doesn't have any open ports... check manually!"
+		cd ..
 		cd ..
 		rm -r $name
 		exit
