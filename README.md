@@ -1,4 +1,4 @@
-# FairScan.sh
+#FairScan.sh
 Written by C4l1b4n.
 (This is my username also on HackTheBox)
 
@@ -32,6 +32,7 @@ Usage: ./FairScan.sh [-h] [-s] [-w WORDLIST] target_ip target_name
 Options: -w wordlist	Specify a wordlist for gobuster. (The default one is big.txt from dirb's lists)
 	 -h		Show this helper
    	 -s		Step-by-step: it does first nmap scans, and then service port scans not in parallel, but one by one.
+   	 -f		Force-scans. It doesn't perform ping to check if the host is alive."
 ```
 
 ## Results
