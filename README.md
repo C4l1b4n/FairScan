@@ -1,6 +1,6 @@
 # FairScan.sh
-Written by C4l1b4n.
-(This is my username also on HackTheBox)
+Wrote by me, C4l1b4n.
+(This is also my HackTheBox's username.)
 
 ## Description
 This is a bash script that automates port scans and enumeration of basic services.
@@ -8,7 +8,7 @@ I wrote this "automator" because I found some of them in python, while I was sea
 It can be used in CTFs like Vulnhub or HackTheBox and also in other penetration testing environments like OSCP.
 
 Firstly, this script performs a quick nmap TCP scan (all ports) and then a deep one (open ports previously discovered) plus a UDP scan on the top 20 ports.
-Then it runs nikto and gobuster on ports 80 and/or 443, if they are open, and search for robots.txt
+Then it runs nikto and gobuster on ports 80 and/or 443, if they are open, and search for robots.txt .
 Finally it runs enum4linux if at least one port among 139,389,445 is open.
 All these scans are saved into files, the quick nmap scan is printed as console output.
 
