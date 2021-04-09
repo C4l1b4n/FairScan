@@ -143,7 +143,7 @@ nikto_80 () {
 #gobuster on port 80
 gobuster_80 () {
 	echo "[+] Running gobuster on port 80..."
-	gobuster dir -u http://$ip -w $wordlist -x "php,html,txt,asp,aspx,jsp" -q -k >> gobuster_80_$name.txt
+	gobuster dir -u http://$ip -w $wordlist -x "php,html,txt,asp,aspx,jsp" -t 50 -q -k >> gobuster_80_$name.txt
 	echo "[-] Gobuster on port 80 done!"
 }
 #searching robots.txt
@@ -170,7 +170,7 @@ check_port_443 () {
 #gobuster on port 443
 gobuster_443 () {
 	echo "[+] Running gobuster on port 443..."
-	gobuster dir -u https://$ip -w $wordlist -x "php,html,txt,asp,aspx,jsp" -q -k >> gobuster_443_$name.txt
+	gobuster dir -u https://$ip -w $wordlist -x "php,html,txt,asp,aspx,jsp" -q -t 50 -k >> gobuster_443_$name.txt
 	echo "[-] Gobuster on port 443 done!"
 }
 #nikto on port 443
