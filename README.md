@@ -1,5 +1,5 @@
 # FairScan.sh
-Wrote by me, C4l1b4n.
+Written by me, C4l1b4n.
 (This is also my HackTheBox's username.)
 
 ## Description
