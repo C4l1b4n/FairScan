@@ -16,7 +16,7 @@ usage () {
 	echo "	 target_name	Target name, a dir will be created using this path"
 	echo "Options: -w wordlist	Specify a wordlist for gobuster. (The default one is big.txt from dirb's lists)"
 	echo "	 -h		Show this helper"
-	echo "   	 -s		Step-by-step: it does first nmap scans, and then service port scans not in parallel, but one by one."
+	echo "   	 -s		Step-by-step: it does nmap scans first, then service port scans not in parallel, one by one."
 	echo "   	 -f		Force-scans. It doesn't perform ping to check if the host is alive."
 	exit
 }
