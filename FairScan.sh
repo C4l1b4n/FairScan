@@ -6,8 +6,14 @@
 
 # defalut wordlist for gobuster
 wordlist="/usr/share/wordlists/dirb/big.txt"
+
+# NSE's scripts run by nmap
+nse="dns-nsec-enum,dns-nsec3-enum,dns-nsid,dns-recursion,dns-service-discovery,dns-srv-enum,fcrdns,ftp-anon,ftp-bounce,ftp-libopie,ftp-syst,ftp-vuln-cve2010-4221,http-apache-negotiation,http-apache-server-status,http-aspnet-debug,http-backup-finder,http-bigip-cookie,http-cakephp-version,http-config-backup,http-cookie-flags,http-devframework,http-exif-spider,http-favicon,http-frontpage-login,http-generator,http-git,http-headers,http-hp-ilo-info,http-iis-webdav-vuln,http-internal-ip-disclosure,http-jsonp-detection,http-mcmp,http-ntlm-info,http-passwd,http-php-version,http-qnap-nas-info,http-sap-netweaver-leak,http-security-headers,http-server-header,http-svn-info,http-trane-info,http-userdir-enum,http-vlcstreamer-ls,http-vuln-cve2010-0738,http-vuln-cve2011-3368,http-vuln-cve2014-2126,http-vuln-cve2014-2127,http-vuln-cve2014-2128,http-vuln-cve2014-2129,http-vuln-cve2015-1427,http-vuln-cve2015-1635,http-vuln-cve2017-1001000,http-vuln-misfortune-cookie,http-webdav-scan,http-wordpress-enum,http-wordpress-users,https-redirect,imap-capabilities,imap-ntlm-info,ip-https-discover,membase-http-info,msrpc-enum,mysql-audit,mysql-databases,mysql-empty-password,mysql-info,mysql-users,mysql-variables,mysql-vuln-cve2012-2122,nfs-ls,nfs-showmount,nfs-statfs,pop3-capabilities,pop3-ntlm-info,pptp-version,rdp-ntlm-info,rdp-vuln-ms12-020,realvnc-auth-bypass,riak-http-info,rmi-vuln-classloader,rpc-grind,rpcinfo,smb-enum-domains,smb-enum-groups,smb-enum-processes,smb-enum-services,smb-enum-sessions,smb-enum-shares,smb-enum-users,smb-mbenum,smb-os-discovery,smb-print-text,smb-protocols,smb-security-mode,smb-vuln-cve-2017-7494,smb-vuln-ms10-061,smb-vuln-ms17-010,smb2-capabilities,smb2-security-mode,smb2-vuln-uptime,smtp-commands,smtp-ntlm-info,smtp-vuln-cve2011-1720,smtp-vuln-cve2011-1764,ssh-auth-methods,sshv1,ssl-ccs-injection,ssl-cert,ssl-heartbleed,ssl-poodle,sslv2-drown,sslv2,telnet-encryption,telnet-ntlm-info,tftp-enum,unusual-port,vnc-info,vnc-title"
+
+version="1.1"
 stepbystep="0"
 force="0"
+os=''
 
 #usage helper
 usage () {
@@ -16,10 +22,21 @@ usage () {
 	echo "	 target_name	Target name, a dir will be created using this path"
 	echo "Options: -w wordlist	Specify a wordlist for gobuster. (The default one is big.txt from dirb's lists)"
 	echo "	 -h		Show this helper"
-	echo "   	 -s		Step-by-step: it does nmap scans first, then service port scans not in parallel, one by one."
+	echo "   	 -s		Step-by-step: nmap scans are done first, then service port scans not in parallel, one by one."
 	echo "   	 -f		Force-scans. It doesn't perform ping to check if the host is alive."
 	exit
 }
+
+banner () {
+	echo ""
+	echo "[*] FairScan , script for automated enumeration [*]"
+	echo ""
+	echo "CODER:		C4l1b4n"
+	echo "VERSION:	$version"
+	echo "GITHUB:		https://github.com/C4l1b4n/FairScan"
+	echo ""
+}
+
 #check correct order of parameters and assign $ip and $name
 check_parameters () {
 	while getopts "w:hsf" flag; do
@@ -77,10 +94,17 @@ check_w () {
 #check if the host is alive
 host_alive () {
 	if [[ $force -ne "1" ]] ; then
-		test_host=$(ping $ip -c 1 -W 3 | grep "1 received")
+		test_host=$(ping $ip -c 1 -W 3 | grep "ttl=" | awk -F 'ttl=' '{print $2}' | cut -d' ' -f1)
 		if test -z "$test_host" ; then
 			echo "[**] Oops, the target doesn't seem alive!" 1>&2
 			exit 1
+		else
+			case "${test_host}" in
+				6[34]) os="Linux";;
+				12[78]) os="Windows";;
+				25[45]) os="AIX/Cisco/FreeBSD/HP-UX/Irix/NetBSD/OpenBSD/Solaris";;
+				*) os='';;
+			esac
 		fi
 	fi
 }
@@ -94,10 +118,15 @@ set_env () {
 }
 #nmap quick scan
 quick_nmap () {
+	if test -z $os ; then
+		os="Unknown"
+	fi
+	banner
 	echo ""
-	echo "TARGETING: $ip"
+	echo "TARGET ADDRESS:	$ip"
+	echo "TARGET OS:	$os"
 	echo ""
-	check=$(nmap -sS -T4 -p- $ip | grep " open " )
+	check=$(nmap -sS -T4 -p- --min-rate 3000 $ip | grep " open " )
 	if [[ -z $check ]] ; then
 		echo "[**] The target doesn't have any open ports... check manually!"
 		cd ..
@@ -124,6 +153,14 @@ udp_nmap () {
 	nmap -sU --top-ports 20 -A --version-all --max-retries 1 $ip > udpNmap_$name.txt
 	echo "[-] UDP Nmap scan done!"
 }
+#nmap NSE scan
+nse_nmap () {
+	echo "[+] Running NSE Nmap scan..."
+	ports=$(cat "quickNmap_$name.txt" | grep " open " | cut -d ' ' -f1 | cut -d '/' -f1 | tr '\n' ',' | rev | cut -c 2- | rev)
+	nmap -sV --script "$nse" -p $ports $ip > nse_$name.txt
+	echo "[-] NSE Nmap scan done!"
+}
+
 #check if port 80 is open
 check_port_80 () {
 	temp_80=$(cat "quickNmap_$name.txt" | grep -w "80/tcp")
@@ -200,6 +237,7 @@ all_scans() {
 		quick_nmap
 		slow_nmap &
 		udp_nmap &
+		nse_nmap &
 		check_port_80
 		check_port_443
 		check_smb
@@ -207,7 +245,8 @@ all_scans() {
 	else
 		quick_nmap
 		udp_nmap &
-		slow_nmap
+		slow_nmap 
+		nse_nmap
 		check_port_80
 		wait
 		check_port_443
