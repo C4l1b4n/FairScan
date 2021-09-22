@@ -84,7 +84,7 @@ check_dir () {
 #check if the wordlist specified with -w exists
 check_w () {
 	if [[ -n "$temp_wordlist" ]] && ! [[ -f "$temp_wordlist" ]] ; then
-		echo -e "[**] Wordlist $wordlist doesn't exists! " 1>&2
+		echo -e "[**] Wordlist $temp_wordlist doesn't exists! " 1>&2
     		exit 1
 	fi
 	if [[ -n "$temp_wordlist" ]] ; then
