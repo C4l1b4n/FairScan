@@ -18,6 +18,8 @@ After the first scan, the remaining are done in parallel by default; otherwise y
 2. Nmap all-ports-scan's speed increased by adding --min-rate 3000 (now it's very fast).
 3. A bunch of selected NSE scripts are run after the all-ports-scan. No bruteforcing or autopwn scripts are on the list. 
 
+## Update (25/01/2022)
+Now target's hostname can be added using -H parameter. Hostname is used by gobuster and curl to get better results.
 
 ## Requirments
 ```
@@ -31,10 +33,11 @@ enum4linux
 
 ## Usage
 ```
-Usage: ./FairScan.sh [-h] [-s] [-f] [-w WORDLIST] target_ip target_name
+Usage: ./FairScan.sh [-h] [-s] [-f] [-w WORDLIST] -H [hostname] target_ip target_name
 	 target_ip	Ip address of the target
 	 target_name	Target name, a directory will be created using this path
 Options: -w wordlist	Specify a wordlist for gobuster. (The default one is big.txt from dirb's lists)
+	 -H hostname    Specify hostname. (add it to /etc/passwd)
 	 -h		Show this helper
    	 -s		Step-by-step: nmap scans are done first, then service port scans not in parallel, one by one.
    	 -f		Force-scans. It doesn't perform ping to check if the host is alive.
@@ -50,6 +53,7 @@ Inside /Scans , output files will be stored.
 $ ./FairScan.sh 10.10.10.10 kioptrix1
 $ ./FairScan.sh -s 10.10.10.10 kioptrix2
 $ ./FairScan.sh -s -w /usr/share/wordlists/dirb/common.txt 10.10.10.10 kioptrix3
+$ ./FairScan.sh -f -H kioptrix4.com 10.10.10.10 kioptrix4
 $ ./FairScan.sh -h
 ```
 ## Notes

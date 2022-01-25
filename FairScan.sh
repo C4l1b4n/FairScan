@@ -5,15 +5,16 @@
 ##                    ##
 
 # defalut wordlist for gobuster
-wordlist="/usr/share/wordlists/dirb/big.txt"
+wordlist="/opt/SecLists/Discovery/Web-Content/raft-small-words.txt"
 
 # NSE's scripts run by nmap
 nse="dns-nsec-enum,dns-nsec3-enum,dns-nsid,dns-recursion,dns-service-discovery,dns-srv-enum,fcrdns,ftp-anon,ftp-bounce,ftp-libopie,ftp-syst,ftp-vuln-cve2010-4221,http-apache-negotiation,http-apache-server-status,http-aspnet-debug,http-backup-finder,http-bigip-cookie,http-cakephp-version,http-config-backup,http-cookie-flags,http-devframework,http-exif-spider,http-favicon,http-frontpage-login,http-generator,http-git,http-headers,http-hp-ilo-info,http-iis-webdav-vuln,http-internal-ip-disclosure,http-jsonp-detection,http-mcmp,http-ntlm-info,http-passwd,http-php-version,http-qnap-nas-info,http-sap-netweaver-leak,http-security-headers,http-server-header,http-svn-info,http-trane-info,http-userdir-enum,http-vlcstreamer-ls,http-vuln-cve2010-0738,http-vuln-cve2011-3368,http-vuln-cve2014-2126,http-vuln-cve2014-2127,http-vuln-cve2014-2128,http-vuln-cve2014-2129,http-vuln-cve2015-1427,http-vuln-cve2015-1635,http-vuln-cve2017-1001000,http-vuln-misfortune-cookie,http-webdav-scan,http-wordpress-enum,http-wordpress-users,https-redirect,imap-capabilities,imap-ntlm-info,ip-https-discover,membase-http-info,msrpc-enum,mysql-audit,mysql-databases,mysql-empty-password,mysql-info,mysql-users,mysql-variables,mysql-vuln-cve2012-2122,nfs-ls,nfs-showmount,nfs-statfs,pop3-capabilities,pop3-ntlm-info,pptp-version,rdp-ntlm-info,rdp-vuln-ms12-020,realvnc-auth-bypass,riak-http-info,rmi-vuln-classloader,rpc-grind,rpcinfo,smb-enum-domains,smb-enum-groups,smb-enum-processes,smb-enum-services,smb-enum-sessions,smb-enum-shares,smb-enum-users,smb-mbenum,smb-os-discovery,smb-print-text,smb-protocols,smb-security-mode,smb-vuln-cve-2017-7494,smb-vuln-ms10-061,smb-vuln-ms17-010,smb2-capabilities,smb2-security-mode,smb2-vuln-uptime,smtp-commands,smtp-ntlm-info,smtp-vuln-cve2011-1720,smtp-vuln-cve2011-1764,ssh-auth-methods,sshv1,ssl-ccs-injection,ssl-cert,ssl-heartbleed,ssl-poodle,sslv2-drown,sslv2,telnet-encryption,telnet-ntlm-info,tftp-enum,unusual-port,vnc-info,vnc-title"
 
-version="1.1"
+version="1.2"
 stepbystep="0"
 force="0"
 os=''
+hostname=''
 
 #usage helper
 usage () {
@@ -21,6 +22,7 @@ usage () {
 	echo "	 target_ip	Ip address of the target"
 	echo "	 target_name	Target name, a dir will be created using this path"
 	echo "Options: -w wordlist	Specify a wordlist for gobuster. (The default one is big.txt from dirb's lists)"
+	echo "	 -H hostname    Specify hostname. (add it to /etc/passwd)"
 	echo "	 -h		Show this helper"
 	echo "   	 -s		Step-by-step: nmap scans are done first, then service port scans not in parallel, one by one."
 	echo "   	 -f		Force-scans. It doesn't perform ping to check if the host is alive."
@@ -39,8 +41,9 @@ banner () {
 
 #check correct order of parameters and assign $ip and $name
 check_parameters () {
-	while getopts "w:hsf" flag; do
+	while getopts "w:hH:sf" flag; do
 	case "${flag}" in
+		H) hostname=$OPTARG;;
 		w) temp_wordlist=$OPTARG;;
 		h) usage
 			exit;;
@@ -84,13 +87,26 @@ check_dir () {
 #check if the wordlist specified with -w exists
 check_w () {
 	if [[ -n "$temp_wordlist" ]] && ! [[ -f "$temp_wordlist" ]] ; then
-		echo -e "[**] Wordlist $temp_wordlist doesn't exists! " 1>&2
+		echo -e "[**] Wordlist $temp_wordlist doesn't exist! " 1>&2
     		exit 1
 	fi
 	if [[ -n "$temp_wordlist" ]] ; then
 		wordlist=$temp_wordlist
 	fi
 }
+#check if hostname is set in /etc/passwd
+check_hostname () {
+	if [[ -n "$hostname" ]] ; then
+		temp_hostname=$(cat /etc/hosts | grep -E "(\s)+$hostname")
+		if [[ -z "$temp_hostname" ]] ; then
+			echo "You specified $hostname as hostname, but you didn't put it in /etc/hosts !"
+			exit 1
+		fi
+	else
+		hostname=$ip
+	fi
+}
+
 #check if the host is alive
 host_alive () {
 	if [[ $force -ne "1" ]] ; then
@@ -180,13 +196,13 @@ nikto_80 () {
 #gobuster on port 80
 gobuster_80 () {
 	echo "[+] Running gobuster on port 80..."
-	gobuster dir -u http://$ip -w $wordlist -x "php,html,txt,asp,aspx,jsp" -t 50 -q -k >> gobuster_80_$name.txt
+	gobuster dir -u http://$hostname -w $wordlist -x "php,html,txt,asp,aspx,jsp" -t 100 -q -k --output gobuster_80_$name.txt 1>/dev/null
 	echo "[-] Gobuster on port 80 done!"
 }
 #searching robots.txt
 robots_80 () {
 	echo "[+] Searching robots.txt on port 80..."
-	robot_80=$(curl -sSik "http://$ip:80/robots.txt")
+	robot_80=$(curl -sSik "http://$hostname:80/robots.txt")
 	temp=$(echo $robot_80 | grep "404")
 	if [[ -z $temp ]] ; then 
 		echo "$robot_80" >> robotsTxt_80_$name.txt
@@ -207,7 +223,7 @@ check_port_443 () {
 #gobuster on port 443
 gobuster_443 () {
 	echo "[+] Running gobuster on port 443..."
-	gobuster dir -u https://$ip -w $wordlist -x "php,html,txt,asp,aspx,jsp" -q -t 50 -k >> gobuster_443_$name.txt
+	gobuster dir -u https://$hostname -w $wordlist -x "php,html,txt,asp,aspx,jsp" -q -t 100 -k --output gobuster_443_$name.txt 1>/dev/null
 	echo "[-] Gobuster on port 443 done!"
 }
 #nikto on port 443
@@ -228,6 +244,7 @@ check_smb() {
 check_input(){
 	check_parameters $@
 	check_ip
+	check_hostname
 	check_dir
 	check_w
 	host_alive
