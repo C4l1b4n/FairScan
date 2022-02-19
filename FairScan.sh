@@ -97,7 +97,7 @@ check_w () {
 #check if hostname is set in /etc/passwd
 check_hostname () {
 	if [[ -n "$hostname" ]] ; then
-		temp_hostname=$(cat /etc/hosts | grep -E "(\s)+$hostname")
+		temp_hostname=$(cat /etc/hosts | grep -E "(\s)+$hostname(\s|$)")
 		if [[ -z "$temp_hostname" ]] ; then
 			echo "You specified $hostname as hostname, but you didn't put it in /etc/hosts !"
 			exit 1
@@ -196,7 +196,7 @@ nikto_80 () {
 #gobuster on port 80
 gobuster_80 () {
 	echo "[+] Running gobuster on port 80..."
-	gobuster dir -u http://$hostname -w $wordlist -x "php,html,txt,asp,aspx,jsp" -t 100 -q -k --output gobuster_80_$name.txt 1>/dev/null
+	gobuster dir -u http://$hostname -w $wordlist -x "php,html,txt,asp,aspx,jsp" -t 100 -q -k -d --output gobuster_80_$name.txt 1>/dev/null
 	echo "[-] Gobuster on port 80 done!"
 }
 #searching robots.txt
@@ -223,7 +223,7 @@ check_port_443 () {
 #gobuster on port 443
 gobuster_443 () {
 	echo "[+] Running gobuster on port 443..."
-	gobuster dir -u https://$hostname -w $wordlist -x "php,html,txt,asp,aspx,jsp" -q -t 100 -k --output gobuster_443_$name.txt 1>/dev/null
+	gobuster dir -u https://$hostname -w $wordlist -x "php,html,txt,asp,aspx,jsp" -q -t 100 -k -d --output gobuster_443_$name.txt 1>/dev/null
 	echo "[-] Gobuster on port 443 done!"
 }
 #nikto on port 443
