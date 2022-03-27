@@ -6,7 +6,7 @@ Bash script that automates port scans and enumerates basic services.
 I wrote this "automator" because whilst I found some of them in python, I was searching for a bash one. Moreover, I wanted to improve my skills in bash.
 It can be used in CTFs like Vulnhub or HackTheBox and also in other penetration testing environments like OSCP.
 
-First, this script performs a quick nmap SYN-TCP scan (all ports) and then a deep one (open ports previously discovered) plus a UDP scan on the top 20 ports.
+First, this script performs a quick nmap SYN-TCP scan (all ports) and then a deep one (open ports previously discovered) plus a UDP scan on the top 100 ports.
 Afterwards, it runs nikto and gobuster on ports 80 and/or 443, if they are open, and search for robots.txt .
 Finally it runs enum4linux if at least one port among 139,389 and 445 is open.
 All these scans are saved into files, quick-scan's result is printed as console's output.
