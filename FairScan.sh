@@ -165,8 +165,8 @@ slow_nmap () {
 }
 #quick UDP scan
 udp_nmap () {
-	echo "[+] Running UDP Nmap scan on 20 common ports..."
-	nmap -sU --top-ports 20 -A --version-all --max-retries 1 $ip > udpNmap_$name.txt
+	echo "[+] Running UDP Nmap scan on 100 common ports..."
+	nmap -sU --top-ports 100 --version-all $ip > udpNmap_$name.txt
 	echo "[-] UDP Nmap scan done!"
 }
 #nmap NSE scan
