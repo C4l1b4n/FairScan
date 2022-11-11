@@ -190,7 +190,7 @@ check_port_80 () {
 #nikto on port 80
 nikto_80 () {
 	echo "[+] Running Nikto on port 80..."
-	nikto -port 80 -host $ip -maxtime 10m 2> /dev/null >> nikto_80_$name.txt
+	nikto -port 80 -host $hostname -maxtime 10m 2> /dev/null >> nikto_80_$name.txt
 	echo "[-] Nikto on port 80 done!"
 }
 #gobuster on port 80
@@ -229,7 +229,7 @@ gobuster_443 () {
 #nikto on port 443
 nikto_443 () {
 	echo "[+] Running Nikto on port 443..."
-	nikto -port 443 -host $ip -maxtime 10m 2> /dev/null >> nikto_443_$name.txt
+	nikto -port 443 -host $hostname -maxtime 10m 2> /dev/null >> nikto_443_$name.txt
 	echo "[-] Nikto on port 443 done!"
 }
 #run enum4linux if ports 139,389 or 445 are open
