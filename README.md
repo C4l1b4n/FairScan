@@ -1,4 +1,4 @@
-﻿# FairScan.sh
+# FairScan.sh
 My first upload.
 
 
@@ -114,8 +114,8 @@ Usage: ./FairScan.sh [-h] [-s] [-f] [-w WORDLIST] -H [hostname] target_ip target
 Options: -w wordlist        Specify a wordlist for gobuster. (The default one is big.txt from dirb's lists)
          -H hostname    Specify hostname. (add it to /etc/passwd)
          -h                Show this helper
-            -s                Step-by-step: nmap scans are done first, then service port scans not in parallel, one by one.
-            -f                Force-scans. It doesn't perform ping to check if the host is alive.
+         -s                Step-by-step: nmap scans are done first, then service port scans not in parallel, one by one.
+         -f                Force-scans. It doesn't perform ping to check if the host is alive.
 ```
 
 ## Results
