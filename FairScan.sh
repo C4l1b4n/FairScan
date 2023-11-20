@@ -265,7 +265,7 @@ slow_nmap () {
 }
 #namp UDP scan
 udp_nmap () {
-	print_yellow "[+] Running UDP Nmap scan on 100 common ports..."
+	print_yellow "[+] Running UDP Nmap scan on $nmap_top_udp common ports..."
 	nmap -sU --top-ports $nmap_top_udp --version-all $ip > nmap/udpNmap_$name.txt
 	print_green "[-] UDP Nmap scan done!"
 }
@@ -292,9 +292,11 @@ nikto_scan () {
 gobuster_dir () {
 	print_yellow "[+] Running gobuster on port $2..."
 	gobuster dir -u $1://$hostname -w $gobuster_wordlist -x $gobuster_extensions -t $gobuster_threads -q -k -d --output $1/gobuster_dir_$2_$name.txt 1>/dev/null
-	print_green "[-] Gobuster dir on port $2 done!"
 	if ! [ -s $1/gobuster_dir_$2_$name.txt ] ; then
 		rm $1/gobuster_dir_$2_$name.txt
+		print_red "[-] Gobuster dir on port $2 found nothing!"
+	else
+		print_green "[-] Gobuster dir on port $2 done!"
 	fi
 }
 #gobuster vhost scan, $1 --> protocol, $2 --> port
@@ -302,7 +304,12 @@ gobuster_vhost () {
 	if test $hostname != $ip ; then
 		print_yellow "[+] Running gobuster vhost on port $2..."
 		gobuster vhost -u $1://$hostname -w $gobuster_vhost_wordlist -t $gobuster_threads -q -k --append-domain --output $1/gobuster_subdomains_$2_$name.txt 1>/dev/null
-		print_green "[-] Gobuster vhost on port $2 done!"
+		if ! [ -s $1/gobuster_subdomains_$2_$name.txt ] ; then
+			rm $1/gobuster_subdomains_$2_$name.txt
+			print_red "[-] Gobuster vhost on port $2 found nothing!"
+		else
+			print_green "[-] Gobuster vhost on port $2 done!"
+		fi
 	fi
 }
 #download robots.txt, $1 --> protocol, $2 --> port
@@ -394,8 +401,8 @@ check_port_80 () {
 		nikto_scan "http" "80" &
 		robots_txt "http" "80" &
 		whatweb_scan "http" "80" &
+		gobuster_vhost "http" "80"
 		gobuster_dir "http" "80"
-		gobuster_vhost "http" "80" &
 		http_verbs "http" "80" &
 		#add more scans on port 80!
 	fi
@@ -409,8 +416,8 @@ check_port_443 () {
 		nikto_scan "https" "443" &
 		robots_txt "https" "443" &
 		whatweb_scan "https" "443" &
+		gobuster_vhost "https" "443"
 		gobuster_dir "https" "443"
-		gobuster_vhost "https" "443" &
 		http_verbs "https" "443" &
 		#add more scans on port 443!
 	fi
