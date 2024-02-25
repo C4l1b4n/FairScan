@@ -96,6 +96,7 @@ banner () {
 	echo "	MODDER:		chromefinch"
 	echo "	VERSION:	$version"
 	echo "	GITHUB:		https://github.com/C4l1b4n/FairScan"
+	echo "	Targeting       $hostname $ip"
 	echo ""
 }
 echo "ip -w /usr/share/wordlists/dirb/common.txt"
@@ -134,6 +135,7 @@ check_ip () {
 		counter=`expr $counter + 1`
 		if [[ $part = *[!0-9]* ]] || [[ $part -gt 255 ]] ; then
 			print_red "[**] Wrong IP"
+			nslookup $ip
 			exit 1
 		fi
 	done
@@ -177,8 +179,8 @@ check_hostname () {
 	if [[ -n "$hostname" ]] ; then
 		temp_hostname=$(cat /etc/hosts | grep -E "(\s)+$hostname+(\s|$)")
 		if [[ -z "$temp_hostname" ]] ; then
-			print_red "You specified $hostname as hostname, but you didn't put it in /etc/hosts !"
-			exit 1
+			print_red "You specified $hostname as hostname, but you didn't put it in /etc/hosts ! I've added, but pls remove later!"
+			sudo echo "$ip $temp_hostname" >> /etc/hosts
 		fi
 	else
 		hostname=$ip
@@ -236,8 +238,8 @@ quick_nmap () {
 	if [[ -n "$temp_wordlist" ]] ; then
 		gobuster_wordlist=$temp_wordlist
 	fi
-	
-	banner
+	banner	
+	read -p "Do you want to run gobuster? enter one of the folowing (dir/vhost/all/N) " gobusterAnswer
 	echo ""
 	echo "TARGET ADDRESS:	$ip"
 	echo "TARGET OS:	$os"
@@ -422,17 +424,52 @@ check_port_80 () {
 	if [[ -n $temp_80 ]] ; then
 	portz=$(echo "$temp_80" | grep "/tcp" | cut -d ' ' -f1 | cut -d '/' -f1  | rev | cut -c 1- | rev)
 	mkdir http
+case $gobusterAnswer in 
+    [all] ) echo "running gobuster dir & vhost" ;
 		for i in ${portz[@]}; do
 			echo $i
 			hakrawler_crawl "http" $i &
 			nikto_scan "http" $i &
 			robots_txt "http" $i &
 			whatweb_scan "http" $i &
-			#gobuster_vhost "http" $i
-			#gobuster_dir "http" $i
+			gobuster_vhost "http" $i
+			gobuster_dir "http" $i
 			http_verbs "http" $i &
 			#add more scans on port 80!
-		done
+		done;;
+    [dir] ) echo "running gobuster dir" ;
+		for i in ${portz[@]}; do
+			echo $i
+			hakrawler_crawl "http" $i &
+			nikto_scan "http" $i &
+			robots_txt "http" $i &
+			whatweb_scan "http" $i &
+			gobuster_dir "http" $i
+			http_verbs "http" $i &
+			#add more scans on port 80!
+		done;;
+    [vhost] ) echo "running gobuster vhost" ;
+		for i in ${portz[@]}; do
+			echo $i
+			hakrawler_crawl "http" $i &
+			nikto_scan "http" $i &
+			robots_txt "http" $i &
+			whatweb_scan "http" $i &
+			gobuster_vhost "http" $i
+			http_verbs "http" $i &
+			#add more scans on port 80!
+		done;;
+    [*] ) echo "Skipping gobuster...";
+		for i in ${portz[@]}; do
+			echo $i
+			hakrawler_crawl "http" $i &
+			nikto_scan "http" $i &
+			robots_txt "http" $i &
+			whatweb_scan "http" $i &
+			http_verbs "http" $i &
+			#add more scans on port 80!
+		done;;
+esac
 	fi
 }
 
