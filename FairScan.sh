@@ -96,10 +96,8 @@ banner () {
 	echo "	MODDER:		chromefinch"
 	echo "	VERSION:	$version"
 	echo "	GITHUB:		https://github.com/C4l1b4n/FairScan"
-	echo "	Targeting       $hostname $ip"
 	echo ""
 }
-echo "ip -w /usr/share/wordlists/dirb/common.txt"
 
 #----------------------------------------------------------------------------------------------------------------------
 ##### SET ENV #####
@@ -107,7 +105,7 @@ echo "ip -w /usr/share/wordlists/dirb/common.txt"
 
 #check correct order of parameters and assign $ip and $name
 check_parameters () {
-	while getopts "w:hH:sf" flag; do
+	while getopts "w:hH:sfz:" flag; do
 	case "${flag}" in
 		H) hostname=$OPTARG;;
 		w) temp_wordlist=$OPTARG;;
@@ -179,8 +177,8 @@ check_hostname () {
 	if [[ -n "$hostname" ]] ; then
 		temp_hostname=$(cat /etc/hosts | grep -E "(\s)+$hostname+(\s|$)")
 		if [[ -z "$temp_hostname" ]] ; then
-			print_red "You specified $hostname as hostname, but you didn't put it in /etc/hosts ! I've added, but pls remove later!"
-			sudo echo "$ip $temp_hostname" >> /etc/hosts
+			print_red "You specified $hostname as hostname, but you didn't put it in /etc/hosts ! I've added $ip $hostname, but pls remove later!"
+			sudo echo "$ip $hostname" >> /etc/hosts
 		fi
 	else
 		hostname=$ip
@@ -192,7 +190,7 @@ host_alive () {
 	if [[ $force -ne "1" ]] ; then
 		test_host=$(ping $ip -c 1 -W 3 | grep "ttl=" | awk -F 'ttl=' '{print $2}' | cut -d' ' -f1)
 		if test -z "$test_host" ; then
-			print_red "[**] Oops, the target doesn't seem alive!" 1>&2
+			print_red "[**] Oops, the target doesn't seem alive! Use -f to override" 1>&2
 			exit 1
 		else
 			case "${test_host}" in
@@ -239,12 +237,19 @@ quick_nmap () {
 		gobuster_wordlist=$temp_wordlist
 	fi
 	banner	
+	if [ -z "$quickPorts" ] ; then
+        portzdefault="--top-ports 10000"
+        read -p "Enter desired ports to quick scan  [$portzdefault]:" portsv
+        quickPorts=${portsv:-$portzdefault}
+	fi
+	echo ""
 	read -p "Do you want to run gobuster? enter one of the folowing (dir/vhost/all/N) " gobusterAnswer
 	echo ""
-	echo "TARGET ADDRESS:	$ip"
+	echp ""
+	echo "TARGET ADDRESS:	$ip $hostname"
 	echo "TARGET OS:	$os"
 	echo ""
-	check=$(nmap -sS -p- -n -Pn $ip | grep "/tcp" )
+	check=$(nmap -sS $quickPorts -n -Pn $ip | grep "/tcp" )
 	if [[ -z $check ]] ; then
 		print_red "[**] The target doesn't have any open ports... check manually!"
 		cd ..
@@ -325,7 +330,7 @@ gobuster_vhost () {
 #hakrawler scan, $1 --> protocol, $2 --> port
 hakrawler_crawl () {
 	print_yellow "[+] Running hakrawler on "$1://$hostname:$2"..."
-	echo "$1://$hostname:$2" | hakrawler -d 0 -u | sort -u -o $1/hakrawler$2_$name.txt 1>/dev/null
+	echo "$1://$hostname:$2" | hakrawler -d 0 -u | sort -u -o $1/hakrawler$2_$name.txt >/dev/null 2>&1
 	if ! [ -s $1/hakrawler$2_$name.txt ] ; then
 		rm $1/hakrawler$2_$name.txt
 		print_red "[-] hakrawler on port $2 found nothing!"
