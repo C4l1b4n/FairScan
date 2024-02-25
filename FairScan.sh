@@ -105,7 +105,7 @@ banner () {
 
 #check correct order of parameters and assign $ip and $name
 check_parameters () {
-	while getopts "w:hH:sfz:" flag; do
+	while getopts "w:hH:sf" flag; do
 	case "${flag}" in
 		H) hostname=$OPTARG;;
 		w) temp_wordlist=$OPTARG;;
