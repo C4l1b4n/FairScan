@@ -104,6 +104,7 @@ nikto
 curl
 enum4linux
 whatweb
+hakrawler
 ```
 
 ## Usage
