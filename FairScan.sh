@@ -73,7 +73,7 @@ usage () {
 	echo "	 target_name	Target name, a dir will be created using this path"
 	echo ""
 	echo "Options: -w wordlist	Specify a wordlist for gobuster. (The default one is big.txt from dirb's lists)"
-	echo "	 -H hostname    Specify hostname. (add it to /etc/passwd)"
+	echo "	 -H hostname    Specify hostname (fqdn). MUST BE IN QUOTES! (add it to /etc/hosts)"
 	echo "	 -h		Show this helper"
 	echo "   	 -s		Step-by-step: nmap scans are done first, then service port scans not in parallel, one by one."
 	echo "   	 -f		Force-scans. It doesn't perform ping to check if the host is alive."
@@ -105,15 +105,16 @@ banner () {
 
 #check correct order of parameters and assign $ip and $name
 check_parameters () {
-	while getopts "w:hH:sfz:" flag; do
+	while getopts "w:hH:s:f" flag; do
 	case "${flag}" in
-		H) hostname=$OPTARG;;
+		H) hostname=$OPTARG;
+			print_green "Domain $hostname found";;
 		w) temp_wordlist=$OPTARG;;
 		h) usage
 			exit;;
 		s) stepbystep="1";;
 		f) force="1";;
-		?) print_red "Wrong parameters, use -h to show the helper"
+		*) print_red "Wrong parameters, use -h to show the helper"
 			exit;;
 	esac
 	done
@@ -172,7 +173,7 @@ check_w () {
     		exit 1
 	fi	
 }
-#check if hostname is set in /etc/passwd
+#check if hostname is set in /etc/hosts
 check_hostname () {
 	if [[ -n "$hostname" ]] ; then
 		temp_hostname=$(cat /etc/hosts | grep -E "(\s)+$hostname+(\s|$)")
@@ -182,6 +183,7 @@ check_hostname () {
 		fi
 	else
 		hostname=$ip
+		print_red "Checking $hostname $temp_hostname"
 	fi
 }
 
@@ -245,7 +247,7 @@ quick_nmap () {
 	echo ""
 	read -p "Do you want to run gobuster? enter one of the folowing (dir/vhost/all/N) " gobusterAnswer
 	echo ""
-	echp ""
+	echo ""
 	echo "TARGET ADDRESS:	$ip $hostname"
 	echo "TARGET OS:	$os"
 	echo ""
@@ -501,8 +503,8 @@ check_port_80 () {
 check_port_443 () {
 	temp_443=$(echo "$check" | grep -w "443/tcp")
 	if [[ -n $temp_443 ]] ; then
+		mkdir https
 		if [[ -z $gobusterAnswer ]] ; then
-				mkdir https
 				hakrawler_crawl "https" "443" &
 				nikto_scan "https" "443" &
 				robots_txt "https" "443" &
@@ -514,7 +516,6 @@ check_port_443 () {
 				#add more scans on port 443!
 		fi
 		if [[ $gobusterAnswer == "N" ]] ; then
-				mkdir https
 				hakrawler_crawl "https" "443" &
 				nikto_scan "https" "443" &
 				robots_txt "https" "443" &
@@ -526,7 +527,6 @@ check_port_443 () {
 				#add more scans on port 443!
 		fi
 		if [[ $gobusterAnswer == "all" ]] ; then
-				mkdir https
 				hakrawler_crawl "https" "443" &
 				nikto_scan "https" "443" &
 				robots_txt "https" "443" &
@@ -538,7 +538,6 @@ check_port_443 () {
 				#add more scans on port 443!
 		fi
 		if [[ $gobusterAnswer == "vhost" ]] ; then
-				mkdir https
 				hakrawler_crawl "https" "443" &
 				nikto_scan "https" "443" &
 				robots_txt "https" "443" &
@@ -550,7 +549,6 @@ check_port_443 () {
 				#add more scans on port 443!
 		fi
 		if [[ $gobusterAnswer == "dir" ]] ; then
-				mkdir https
 				hakrawler_crawl "https" "443" &
 				nikto_scan "https" "443" &
 				robots_txt "https" "443" &
