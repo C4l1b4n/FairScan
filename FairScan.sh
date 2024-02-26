@@ -524,10 +524,8 @@ check_port_443 () {
 				http_verbs "https" "443" &
 				hakrawler "https" "443" &
 				#add more scans on port 443!
-			done
 		fi
 		if [[ $gobusterAnswer == "all" ]] ; then
-			for i in ${portz[@]}; do
 				mkdir https
 				hakrawler_crawl "https" "443" &
 				nikto_scan "https" "443" &
