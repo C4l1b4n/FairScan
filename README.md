@@ -1,5 +1,5 @@
 # FairScan.sh
-My first upload.
+rip of someone elses work with some additions 
 
 
 ## Description
