@@ -502,7 +502,6 @@ check_port_443 () {
 	temp_443=$(echo "$check" | grep -w "443/tcp")
 	if [[ -n $temp_443 ]] ; then
 		if [[ -z $gobusterAnswer ]] ; then
-			for i in ${portz[@]}; do
 				mkdir https
 				hakrawler_crawl "https" "443" &
 				nikto_scan "https" "443" &
@@ -513,10 +512,8 @@ check_port_443 () {
 				http_verbs "https" "443" &
 				hakrawler "https" "443" &
 				#add more scans on port 443!
-			done
 		fi
 		if [[ $gobusterAnswer == "N" ]] ; then
-			for i in ${portz[@]}; do
 				mkdir https
 				hakrawler_crawl "https" "443" &
 				nikto_scan "https" "443" &
@@ -541,10 +538,8 @@ check_port_443 () {
 				http_verbs "https" "443" &
 				hakrawler "https" "443" &
 				#add more scans on port 443!
-			done
 		fi
 		if [[ $gobusterAnswer == "vhost" ]] ; then
-			for i in ${portz[@]}; do
 				mkdir https
 				hakrawler_crawl "https" "443" &
 				nikto_scan "https" "443" &
@@ -555,10 +550,8 @@ check_port_443 () {
 				http_verbs "https" "443" &
 				hakrawler "https" "443" &
 				#add more scans on port 443!
-			done
 		fi
 		if [[ $gobusterAnswer == "dir" ]] ; then
-			for i in ${portz[@]}; do
 				mkdir https
 				hakrawler_crawl "https" "443" &
 				nikto_scan "https" "443" &
@@ -569,7 +562,6 @@ check_port_443 () {
 				http_verbs "https" "443" &
 				hakrawler "https" "443" &
 				#add more scans on port 443!
-			done
 		fi
 	fi
 }
