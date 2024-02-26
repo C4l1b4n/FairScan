@@ -433,7 +433,6 @@ check_port_80 () {
 	mkdir http
 	if [[ $gobusterAnswer == "dir" ]] ; then
 		for i in ${portz[@]}; do
-			echo $i
 			hakrawler_crawl "http" $i &
 			nikto_scan "http" $i &
 			robots_txt "http" $i &
@@ -446,7 +445,6 @@ check_port_80 () {
 	fi
 	if [[ $gobusterAnswer == "vhost" ]] ; then
 		for i in ${portz[@]}; do
-			echo $i
 			hakrawler_crawl "http" $i &
 			nikto_scan "http" $i &
 			robots_txt "http" $i &
@@ -459,7 +457,6 @@ check_port_80 () {
 	fi
 	if [[ $gobusterAnswer == "all" ]] ; then
 		for i in ${portz[@]}; do
-			echo $i
 			hakrawler_crawl "http" $i &
 			nikto_scan "http" $i &
 			robots_txt "http" $i &
@@ -472,7 +469,6 @@ check_port_80 () {
 	fi
 	if [[ $gobusterAnswer == "N" ]] ; then
 		for i in ${portz[@]}; do
-			echo $i
 			hakrawler_crawl "http" $i &
 			nikto_scan "http" $i &
 			robots_txt "http" $i &
@@ -485,7 +481,6 @@ check_port_80 () {
 	fi
 	if [[ -z $gobusterAnswer ]] ; then
 		for i in ${portz[@]}; do
-			echo $i
 			hakrawler_crawl "http" $i &
 			nikto_scan "http" $i &
 			robots_txt "http" $i &
@@ -579,6 +574,7 @@ all_scans() {
 		check_port_80
 		check_port_443
 		check_smb
+		echo "all scans launched..."
 		#add more scans!
 	else
 		quick_nmap
