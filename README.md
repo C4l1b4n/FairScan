@@ -113,7 +113,7 @@ Usage: ./FairScan.sh [-h] [-s] [-f] [-w WORDLIST] -H [hostname] target_ip target
          target_ip        Ip address of the target
          target_name        Target name, a directory will be created using this path
 Options: -w wordlist        Specify a wordlist for gobuster. (The default one is big.txt from dirb's lists)
-         -H hostname    Specify hostname. (add it to /etc/passwd)
+         -H hostname    Specify hostname (fqdn). MUST BE IN QUOTES (add it to /etc/hosts)
          -h                Show this helper
          -s                Step-by-step: nmap scans are done first, then service port scans not in parallel, one by one.
          -f                Force-scans. It doesn't perform ping to check if the host is alive.
