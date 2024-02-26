@@ -183,7 +183,7 @@ check_hostname () {
 		fi
 	else
 		hostname=$ip
-		print_red "Checking $hostname $temp_hostname"
+		print_yellow "No hostname provided, remember they need to be in quotes"
 	fi
 }
 
