@@ -22,25 +22,25 @@ nikto_maxtime="10m"
 ### GOBUSTER
 ## Linux
 # directory bruteforce wordlist for detected linux machines
-gobuster_dir_linux_wordlist="/opt/SecLists/Discovery/Web-Content/raft-small-words.txt"
+gobuster_dir_linux_wordlist="/usr/share/seclists/Discovery/Web-Content/raft-small-words.txt"
 # directory bruteforce extensions for detected linux machines
 gobuster_dir_linux_extensions="php,html,txt"
 
 ## Windows
 # directory bruteforce wordlist for detected windows machines
-gobuster_dir_windows_wordlist="/opt/SecLists/Discovery/Web-Content/raft-small-words-lowercase.txt"
+gobuster_dir_windows_wordlist="/usr/share/seclists/Discovery/Web-Content/raft-small-words-lowercase.txt"
 # directory bruteforce extensions for detected windows machines
 gobuster_dir_windows_extensions="php,html,asp,aspx,jsp"
 
 ## Unknown OS
 # directory bruteforce wordlist for NOT detected OS
-gobuster_dir_unknown_wordlist="/opt/SecLists/Discovery/Web-Content/raft-small-words.txt"
+gobuster_dir_unknown_wordlist="/usr/share/seclists/Discovery/Web-Content/raft-small-words.txt"
 # directory bruteforce extensions for NOT detected OS
-gobuster_dir_unknown_extensions="php,html,txt,asp,aspx,jsp"
+gobuster_dir_unknown_extensions="php,html,txt,asp,aspx,jsp,pdf,wsdl,asmx"
 
 ## All OSs
 # vhost bruteforce wordlist
-gobuster_vhost_wordlist="/opt/SecLists/Discovery/DNS/combined_subdomains.txt"
+gobuster_vhost_wordlist="/usr/share/seclists/Discovery/DNS/combined_subdomains.txt"
 # number of threads
 gobuster_threads="100"
 
@@ -58,7 +58,7 @@ whatweb_level="3"
 # NSE's scripts run by nmap
 nse="dns-nsec-enum,dns-nsec3-enum,dns-nsid,dns-recursion,dns-service-discovery,dns-srv-enum,fcrdns,ftp-anon,ftp-bounce,ftp-libopie,ftp-syst,ftp-vuln-cve2010-4221,http-apache-negotiation,http-apache-server-status,http-aspnet-debug,http-backup-finder,http-bigip-cookie,http-cakephp-version,http-config-backup,http-cookie-flags,http-devframework,http-exif-spider,http-favicon,http-frontpage-login,http-generator,http-git,http-headers,http-hp-ilo-info,http-iis-webdav-vuln,http-internal-ip-disclosure,http-jsonp-detection,http-mcmp,http-ntlm-info,http-passwd,http-php-version,http-qnap-nas-info,http-sap-netweaver-leak,http-security-headers,http-server-header,http-svn-info,http-trane-info,http-userdir-enum,http-vlcstreamer-ls,http-vuln-cve2010-0738,http-vuln-cve2011-3368,http-vuln-cve2014-2126,http-vuln-cve2014-2127,http-vuln-cve2014-2128,http-vuln-cve2014-2129,http-vuln-cve2015-1427,http-vuln-cve2015-1635,http-vuln-cve2017-1001000,http-vuln-misfortune-cookie,http-webdav-scan,http-wordpress-enum,http-wordpress-users,https-redirect,imap-capabilities,imap-ntlm-info,ip-https-discover,membase-http-info,msrpc-enum,mysql-audit,mysql-databases,mysql-empty-password,mysql-info,mysql-users,mysql-variables,mysql-vuln-cve2012-2122,nfs-ls,nfs-showmount,nfs-statfs,pop3-capabilities,pop3-ntlm-info,pptp-version,rdp-ntlm-info,rdp-vuln-ms12-020,realvnc-auth-bypass,riak-http-info,rmi-vuln-classloader,rpc-grind,rpcinfo,smb-enum-domains,smb-enum-groups,smb-enum-processes,smb-enum-services,smb-enum-sessions,smb-enum-shares,smb-enum-users,smb-mbenum,smb-os-discovery,smb-print-text,smb-protocols,smb-security-mode,smb-vuln-cve-2017-7494,smb-vuln-ms10-061,smb-vuln-ms17-010,smb2-capabilities,smb2-security-mode,smb2-vuln-uptime,smtp-commands,smtp-ntlm-info,smtp-vuln-cve2011-1720,smtp-vuln-cve2011-1764,ssh-auth-methods,sshv1,ssl-ccs-injection,ssl-cert,ssl-heartbleed,ssl-poodle,sslv2-drown,sslv2,telnet-encryption,telnet-ntlm-info,tftp-enum,unusual-port,vnc-info,vnc-title"
 
-version="1.3"
+version="1.3.1"
 stepbystep="0"
 force="0"
 os=''
@@ -73,7 +73,7 @@ usage () {
 	echo "	 target_name	Target name, a dir will be created using this path"
 	echo ""
 	echo "Options: -w wordlist	Specify a wordlist for gobuster. (The default one is big.txt from dirb's lists)"
-	echo "	 -H hostname    Specify hostname. (add it to /etc/passwd)"
+	echo "	 -H hostname    Specify hostname (fqdn). MUST BE IN QUOTES! (add it to /etc/hosts)"
 	echo "	 -h		Show this helper"
 	echo "   	 -s		Step-by-step: nmap scans are done first, then service port scans not in parallel, one by one."
 	echo "   	 -f		Force-scans. It doesn't perform ping to check if the host is alive."
@@ -93,11 +93,11 @@ banner () {
 	echo "	[*] FairScan , script for automated enumeration [*]"
 	echo ""
 	echo "	CODER:		C4l1b4n"
+	echo "	MODDER:		chromefinch"
 	echo "	VERSION:	$version"
 	echo "	GITHUB:		https://github.com/C4l1b4n/FairScan"
 	echo ""
 }
-
 
 #----------------------------------------------------------------------------------------------------------------------
 ##### SET ENV #####
@@ -105,15 +105,16 @@ banner () {
 
 #check correct order of parameters and assign $ip and $name
 check_parameters () {
-	while getopts "w:hH:sf" flag; do
+	while getopts "w:hH:s:f" flag; do
 	case "${flag}" in
-		H) hostname=$OPTARG;;
+		H) hostname=$OPTARG;
+			print_green "Domain $hostname found";;
 		w) temp_wordlist=$OPTARG;;
 		h) usage
 			exit;;
 		s) stepbystep="1";;
 		f) force="1";;
-		?) print_red "Wrong parameters, use -h to show the helper"
+		*) print_red "Wrong parameters, use -h to show the helper"
 			exit;;
 	esac
 	done
@@ -133,6 +134,7 @@ check_ip () {
 		counter=`expr $counter + 1`
 		if [[ $part = *[!0-9]* ]] || [[ $part -gt 255 ]] ; then
 			print_red "[**] Wrong IP"
+			nslookup $ip
 			exit 1
 		fi
 	done
@@ -171,16 +173,17 @@ check_w () {
     		exit 1
 	fi	
 }
-#check if hostname is set in /etc/passwd
+#check if hostname is set in /etc/hosts
 check_hostname () {
 	if [[ -n "$hostname" ]] ; then
 		temp_hostname=$(cat /etc/hosts | grep -E "(\s)+$hostname+(\s|$)")
 		if [[ -z "$temp_hostname" ]] ; then
-			print_red "You specified $hostname as hostname, but you didn't put it in /etc/hosts !"
-			exit 1
+			print_red "You specified $hostname as hostname, but you didn't put it in /etc/hosts ! I've added $ip $hostname, but pls remove later!"
+			sudo echo "$ip $hostname" >> /etc/hosts
 		fi
 	else
 		hostname=$ip
+		print_yellow "No hostname provided, remember they need to be in quotes"
 	fi
 }
 
@@ -189,7 +192,7 @@ host_alive () {
 	if [[ $force -ne "1" ]] ; then
 		test_host=$(ping $ip -c 1 -W 3 | grep "ttl=" | awk -F 'ttl=' '{print $2}' | cut -d' ' -f1)
 		if test -z "$test_host" ; then
-			print_red "[**] Oops, the target doesn't seem alive!" 1>&2
+			print_red "[**] Oops, the target doesn't seem alive! Use -f to override" 1>&2
 			exit 1
 		else
 			case "${test_host}" in
@@ -235,13 +238,20 @@ quick_nmap () {
 	if [[ -n "$temp_wordlist" ]] ; then
 		gobuster_wordlist=$temp_wordlist
 	fi
-	
-	banner
+	banner	
+	if [ -z "$quickPorts" ] ; then
+        portzdefault="--top-ports 10000"
+        read -p "Enter desired ports to quick scan  [$portzdefault]:" portsv
+        quickPorts=${portsv:-$portzdefault}
+	fi
 	echo ""
-	echo "TARGET ADDRESS:	$ip"
+	read -p "Do you want to run gobuster? enter one of the folowing (dir/vhost/all/N) " gobusterAnswer
+	echo ""
+	echo ""
+	echo "TARGET ADDRESS:	$ip $hostname"
 	echo "TARGET OS:	$os"
 	echo ""
-	check=$(nmap -sS -T4 -p- --min-rate $nmap_min_rate $ip | grep "/tcp" )
+	check=$(nmap -sS $quickPorts -n -Pn $ip | grep "/tcp" )
 	if [[ -z $check ]] ; then
 		print_red "[**] The target doesn't have any open ports... check manually!"
 		cd ..
@@ -273,10 +283,16 @@ udp_nmap () {
 nse_nmap () {
 	print_yellow "[+] Running NSE Nmap scan..."
 	ports=$(echo "$check" | grep " open " | cut -d ' ' -f1 | cut -d '/' -f1 | tr '\n' ',' | rev | cut -c 2- | rev)
-	nmap -sV --script "$nse" -p $ports $ip > nmap/nse_$name.txt
+	nmap -sV -n -O --script "$nse" -p $ports $ip > nmap/nse_$name.txt
 	print_green "[-] NSE Nmap scan done!"
 }
-
+#nmap Vuln scan
+vuln_nmap () {
+	print_yellow "[+] Running Vuln Nmap scan..."
+	ports=$(echo "$check" | grep " open " | cut -d ' ' -f1 | cut -d '/' -f1 | tr '\n' ',' | rev | cut -c 2- | rev)
+	nmap -sV -n -0 --script =default,vuln -p $ports $ip > nmap/vuln_$name.txt
+	print_green "[-] Vuln Nmap scan done!"
+}
 
 #----------------------------------------------------------------------------------------------------------------------
 ##### SERVICES SCANS #####
@@ -289,9 +305,10 @@ nikto_scan () {
 	print_green "[-] Nikto on port $2 done!"
 }
 #gobuster dir scan, $1 --> protocol, $2 --> port
+
 gobuster_dir () {
 	print_yellow "[+] Running gobuster on port $2..."
-	gobuster dir -u $1://$hostname -w $gobuster_wordlist -x $gobuster_extensions -t $gobuster_threads -q -k -d --output $1/gobuster_dir_$2_$name.txt 1>/dev/null
+	gobuster dir -u $1://$hostname:$2 -w $gobuster_wordlist -x $gobuster_extensions -t $gobuster_threads -q -k -d --output $1/gobuster_dir_$2_$name.txt 1>/dev/null
 	if ! [ -s $1/gobuster_dir_$2_$name.txt ] ; then
 		rm $1/gobuster_dir_$2_$name.txt
 		print_red "[-] Gobuster dir on port $2 found nothing!"
@@ -303,7 +320,7 @@ gobuster_dir () {
 gobuster_vhost () {
 	if test $hostname != $ip ; then
 		print_yellow "[+] Running gobuster vhost on port $2..."
-		gobuster vhost -u $1://$hostname -w $gobuster_vhost_wordlist -t $gobuster_threads -q -k --append-domain --output $1/gobuster_subdomains_$2_$name.txt 1>/dev/null
+		gobuster vhost -u $1://$hostname:$2 -w $gobuster_vhost_wordlist -t $gobuster_threads -q -k --append-domain --output $1/gobuster_subdomains_$2_$name.txt 1>/dev/null
 		if ! [ -s $1/gobuster_subdomains_$2_$name.txt ] ; then
 			rm $1/gobuster_subdomains_$2_$name.txt
 			print_red "[-] Gobuster vhost on port $2 found nothing!"
@@ -312,6 +329,19 @@ gobuster_vhost () {
 		fi
 	fi
 }
+#hakrawler scan, $1 --> protocol, $2 --> port
+hakrawler_crawl () {
+	print_yellow "[+] Running hakrawler on "$1://$hostname:$2"..."
+	echo "$1://$hostname:$2" | hakrawler -d 0 -u | sort -u -o $1/hakrawler$2_$name.txt >/dev/null 2>&1
+	if ! [ -s $1/hakrawler$2_$name.txt ] ; then
+		rm $1/hakrawler$2_$name.txt
+		print_red "[-] hakrawler on port $2 found nothing!"
+	else
+		print_green "[-] hakrawler on port $2 done!"
+	fi
+}
+
+
 #download robots.txt, $1 --> protocol, $2 --> port
 robots_txt () {
 	print_yellow "[+] Searching robots.txt on port $2..."
@@ -326,9 +356,12 @@ robots_txt () {
 }
 # whatweb scan, $1 --> protocol, $2 --> port
 whatweb_scan () {
-	print_yellow "[+] Running whatweb on port $2..."
-	whatweb $1://$ip -a $whatweb_level -v --color never --no-error 2>/dev/null >> $1/whatweb_$2_$name.txt
-	print_green "[-] Whatweb on port $2 done!"
+	print_yellow "[+] Running whatweb on $1://$ip:$2..."
+	whatweb $1://$ip:$2 -a $whatweb_level -v --color never --no-error 2>/dev/null >> $1/whatweb_$2_$name.txt
+	print_green "[-] Whatweb on $1://$ip:$2 done!"
+	print_yellow "[+] Running whatweb on $1://$hostname:$2..."
+	whatweb $1://$hostname:$2 -a $whatweb_level -v --color never --no-error 2>/dev/null >> $1/whatweb_$2_$name.txt
+	print_green "[-] Whatweb on $1://$hostname:$2 done!"
 }
 # enumerate http verbs, $1 --> protocol, $2 --> port
 http_verbs () {
@@ -341,13 +374,13 @@ http_verbs () {
 	redirected=$(cat $1/gobuster_dir_$2_$name.txt | grep "(Status: 3" | awk -F' ' '{print $7}' | cut -d ']' -f 1)
 	concatenation=""
 	for i in $not_redirected ; do
-		concatenation+="$1://$hostname$i "
+		concatenation+="$1://$hostname:$2$i "
 	done
 	for i in $redirected ; do
 		if [[ ${i:0:4} == "http" ]] ; then
 			concatenation+="$i "
 		else
-			concatenation+="$1://$hostname$i "
+			concatenation+="$1://$hostname:$2$i "
 		fi
 		
 	done
@@ -371,7 +404,6 @@ check_smb() {
 	fi
 }
 
-
 #----------------------------------------------------------------------------------------------------------------------
 ##### UTILITIES #####
 #----------------------------------------------------------------------------------------------------------------------
@@ -393,18 +425,72 @@ print_blue (){
 ##### MAIN #####
 #----------------------------------------------------------------------------------------------------------------------
 
-#check if port 80 is open
+#check if port http is open
 check_port_80 () {
-	temp_80=$(echo "$check" | grep -w "80/tcp")
+	temp_80=$(echo "$check" | grep -v -we "443/tcp" -we '22/tcp' -we '445/tcp' -we '21/tcp' -we '139/tcp' -we '135/tcp' -we '3389/tcp')
 	if [[ -n $temp_80 ]] ; then
-		mkdir http
-		nikto_scan "http" "80" &
-		robots_txt "http" "80" &
-		whatweb_scan "http" "80" &
-		gobuster_vhost "http" "80"
-		gobuster_dir "http" "80"
-		http_verbs "http" "80" &
-		#add more scans on port 80!
+	portz=$(echo "$temp_80" | grep "/tcp" | cut -d ' ' -f1 | cut -d '/' -f1  | rev | cut -c 1- | rev)
+	mkdir http
+	if [[ $gobusterAnswer == "dir" ]] ; then
+		for i in ${portz[@]}; do
+			hakrawler_crawl "http" $i &
+			nikto_scan "http" $i &
+			robots_txt "http" $i &
+			whatweb_scan "http" $i &
+			#gobuster_vhost "http" $i
+			gobuster_dir "http" $i
+			http_verbs "http" $i &
+			#add more scans on port 80!
+		done
+	fi
+	if [[ $gobusterAnswer == "vhost" ]] ; then
+		for i in ${portz[@]}; do
+			hakrawler_crawl "http" $i &
+			nikto_scan "http" $i &
+			robots_txt "http" $i &
+			whatweb_scan "http" $i &
+			gobuster_vhost "http" $i
+			#gobuster_dir "http" $i
+			http_verbs "http" $i &
+			#add more scans on port 80!
+		done
+	fi
+	if [[ $gobusterAnswer == "all" ]] ; then
+		for i in ${portz[@]}; do
+			hakrawler_crawl "http" $i &
+			nikto_scan "http" $i &
+			robots_txt "http" $i &
+			whatweb_scan "http" $i &
+			gobuster_vhost "http" $i
+			gobuster_dir "http" $i
+			http_verbs "http" $i &
+			#add more scans on port 80!
+		done
+	fi
+	if [[ $gobusterAnswer == "N" ]] ; then
+		for i in ${portz[@]}; do
+			hakrawler_crawl "http" $i &
+			nikto_scan "http" $i &
+			robots_txt "http" $i &
+			whatweb_scan "http" $i &
+			#gobuster_vhost "http" $i
+			#gobuster_dir "http" $i
+			http_verbs "http" $i &
+			#add more scans on port 80!
+		done
+	fi
+	if [[ -z $gobusterAnswer ]] ; then
+		for i in ${portz[@]}; do
+			hakrawler_crawl "http" $i &
+			nikto_scan "http" $i &
+			robots_txt "http" $i &
+			whatweb_scan "http" $i &
+			#gobuster_vhost "http" $i
+			#gobuster_dir "http" $i
+			http_verbs "http" $i &
+			#add more scans on port 80!
+		done
+	fi
 	fi
 }
 
@@ -413,13 +499,61 @@ check_port_443 () {
 	temp_443=$(echo "$check" | grep -w "443/tcp")
 	if [[ -n $temp_443 ]] ; then
 		mkdir https
-		nikto_scan "https" "443" &
-		robots_txt "https" "443" &
-		whatweb_scan "https" "443" &
-		gobuster_vhost "https" "443"
-		gobuster_dir "https" "443"
-		http_verbs "https" "443" &
-		#add more scans on port 443!
+		if [[ -z $gobusterAnswer ]] ; then
+				hakrawler_crawl "https" "443" &
+				nikto_scan "https" "443" &
+				robots_txt "https" "443" &
+				whatweb_scan "https" "443" &
+				#gobuster_vhost "https" "443"
+				#gobuster_dir "https" "443"
+				http_verbs "https" "443" &
+				hakrawler "https" "443" &
+				#add more scans on port 443!
+		fi
+		if [[ $gobusterAnswer == "N" ]] ; then
+				hakrawler_crawl "https" "443" &
+				nikto_scan "https" "443" &
+				robots_txt "https" "443" &
+				whatweb_scan "https" "443" &
+				#gobuster_vhost "https" "443"
+				#gobuster_dir "https" "443"
+				http_verbs "https" "443" &
+				hakrawler "https" "443" &
+				#add more scans on port 443!
+		fi
+		if [[ $gobusterAnswer == "all" ]] ; then
+				hakrawler_crawl "https" "443" &
+				nikto_scan "https" "443" &
+				robots_txt "https" "443" &
+				whatweb_scan "https" "443" &
+				gobuster_vhost "https" "443"
+				gobuster_dir "https" "443"
+				http_verbs "https" "443" &
+				hakrawler "https" "443" &
+				#add more scans on port 443!
+		fi
+		if [[ $gobusterAnswer == "vhost" ]] ; then
+				hakrawler_crawl "https" "443" &
+				nikto_scan "https" "443" &
+				robots_txt "https" "443" &
+				whatweb_scan "https" "443" &
+				gobuster_vhost "https" "443"
+				#gobuster_dir "https" "443"
+				http_verbs "https" "443" &
+				hakrawler "https" "443" &
+				#add more scans on port 443!
+		fi
+		if [[ $gobusterAnswer == "dir" ]] ; then
+				hakrawler_crawl "https" "443" &
+				nikto_scan "https" "443" &
+				robots_txt "https" "443" &
+				whatweb_scan "https" "443" &
+				#gobuster_vhost "https" "443"
+				gobuster_dir "https" "443"
+				http_verbs "https" "443" &
+				hakrawler "https" "443" &
+				#add more scans on port 443!
+		fi
 	fi
 }
 check_input(){
@@ -435,15 +569,18 @@ all_scans() {
 		quick_nmap
 		slow_nmap
 		nse_nmap
+		vuln_nmap
 		udp_nmap &
 		check_port_80
 		check_port_443
 		check_smb
+		echo "all scans launched..."
 		#add more scans!
 	else
 		quick_nmap
 		slow_nmap 
 		nse_nmap
+		vuln_nmap
 		udp_nmap &
 		check_port_80
 		wait
