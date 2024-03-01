@@ -290,7 +290,7 @@ nse_nmap () {
 vuln_nmap () {
 	print_yellow "[+] Running Vuln Nmap scan..."
 	ports=$(echo "$check" | grep " open " | cut -d ' ' -f1 | cut -d '/' -f1 | tr '\n' ',' | rev | cut -c 2- | rev)
-	nmap -sV -n -0 --script =default,vuln -p $ports $ip > nmap/vuln_$name.txt
+	nmap -sV -n -O --script =default,vuln -p $ports $ip > nmap/vuln_$name.txt
 	print_green "[-] Vuln Nmap scan done!"
 }
 
