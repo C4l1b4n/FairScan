@@ -58,7 +58,7 @@ whatweb_level="3"
 # NSE's scripts run by nmap
 nse="dns-nsec-enum,dns-nsec3-enum,dns-nsid,dns-recursion,dns-service-discovery,dns-srv-enum,fcrdns,ftp-anon,ftp-bounce,ftp-libopie,ftp-syst,ftp-vuln-cve2010-4221,http-apache-negotiation,http-apache-server-status,http-aspnet-debug,http-backup-finder,http-bigip-cookie,http-cakephp-version,http-config-backup,http-cookie-flags,http-devframework,http-exif-spider,http-favicon,http-frontpage-login,http-generator,http-git,http-headers,http-hp-ilo-info,http-iis-webdav-vuln,http-internal-ip-disclosure,http-jsonp-detection,http-mcmp,http-ntlm-info,http-passwd,http-php-version,http-qnap-nas-info,http-sap-netweaver-leak,http-security-headers,http-server-header,http-svn-info,http-trane-info,http-userdir-enum,http-vlcstreamer-ls,http-vuln-cve2010-0738,http-vuln-cve2011-3368,http-vuln-cve2014-2126,http-vuln-cve2014-2127,http-vuln-cve2014-2128,http-vuln-cve2014-2129,http-vuln-cve2015-1427,http-vuln-cve2015-1635,http-vuln-cve2017-1001000,http-vuln-misfortune-cookie,http-webdav-scan,http-wordpress-enum,http-wordpress-users,https-redirect,imap-capabilities,imap-ntlm-info,ip-https-discover,membase-http-info,msrpc-enum,mysql-audit,mysql-databases,mysql-empty-password,mysql-info,mysql-users,mysql-variables,mysql-vuln-cve2012-2122,nfs-ls,nfs-showmount,nfs-statfs,pop3-capabilities,pop3-ntlm-info,pptp-version,rdp-ntlm-info,rdp-vuln-ms12-020,realvnc-auth-bypass,riak-http-info,rmi-vuln-classloader,rpc-grind,rpcinfo,smb-enum-domains,smb-enum-groups,smb-enum-processes,smb-enum-services,smb-enum-sessions,smb-enum-shares,smb-enum-users,smb-mbenum,smb-os-discovery,smb-print-text,smb-protocols,smb-security-mode,smb-vuln-cve-2017-7494,smb-vuln-ms10-061,smb-vuln-ms17-010,smb2-capabilities,smb2-security-mode,smb2-vuln-uptime,smtp-commands,smtp-ntlm-info,smtp-vuln-cve2011-1720,smtp-vuln-cve2011-1764,ssh-auth-methods,sshv1,ssl-ccs-injection,ssl-cert,ssl-heartbleed,ssl-poodle,sslv2-drown,sslv2,telnet-encryption,telnet-ntlm-info,tftp-enum,unusual-port,vnc-info,vnc-title"
 
-version="1.3.1"
+version="1.3.2"
 stepbystep="0"
 force="0"
 os=''
@@ -138,14 +138,15 @@ check_ip () {
 		counter=`expr $counter + 1`
 		if [[ $part = *[!0-9]* ]] || [[ $part -gt 255 ]] ; then
 			print_red "[**] Wrong IP"
-			nslookup $ip
-			usage
-			exit 1
 		fi
 	done
 	if [[ counter -ne 4 ]] ; then
-		print_red "[**] Wrong IP" 1>&2
-		exit 1
+			hostname="$ip"
+			ip="$(nslookup $hostname | grep -E "Address\: \S+" | sed "s/Address: //g")"
+			force="1"
+			print_red "Attempting Error recovery with the following assumed:"
+			echo -H $hostname $ip $name
+			check_dir
 	fi
 }
 #check if the $name path already exists
@@ -243,15 +244,15 @@ quick_nmap () {
 		gobuster_wordlist=$temp_wordlist
 	fi
 	banner
+	echo ""
+	echo "TARGET ADDRESS:	$ip $hostname"
+	echo "TARGET OS:	$os"
+	echo ""
 	if [ -z "$quickPorts" ] ; then
         portzdefault="--top-ports 10000"
         read -p "Enter desired ports to quick scan  [$portzdefault]:" portsv
         quickPorts=${portsv:-$portzdefault}
 	fi
-	echo ""
-	echo "TARGET ADDRESS:	$ip $hostname"
-	echo "TARGET OS:	$os"
-	echo ""
 	check=$(nmap -sS $quickPorts -n -Pn $ip | grep "/tcp" )
 	if [[ -z $check ]] ; then
 		print_red "[**] The target doesn't have any open ports... check manually!"
