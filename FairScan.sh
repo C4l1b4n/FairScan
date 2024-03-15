@@ -245,9 +245,6 @@ quick_nmap () {
         quickPorts=${portsv:-$portzdefault}
 	fi
 	echo ""
-	read -p "Do you want to run gobuster? enter one of the folowing (dir/vhost/all/N) " gobusterAnswer
-	echo ""
-	echo ""
 	echo "TARGET ADDRESS:	$ip $hostname"
 	echo "TARGET OS:	$os"
 	echo ""
@@ -567,6 +564,9 @@ check_input(){
 all_scans() {
 	if [[ $stepbystep -ne "1" ]] ; then
 		quick_nmap
+		echo ""
+		read -p "Do you want to run gobuster? enter one of the folowing (dir/vhost/all/N) " gobusterAnswer
+		echo ""
 		slow_nmap
 		nse_nmap
 		vuln_nmap
