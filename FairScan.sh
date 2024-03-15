@@ -68,25 +68,27 @@ gobuster_extensions=''
 
 #usage helper
 usage () {
-	echo "Usage: ./FairScan.sh [ options ] target_ip target_name"
-	echo "	 target_ip	Ip address of the target"
-	echo "	 target_name	Target name, a dir will be created using this path"
 	echo ""
-	echo "Options: -w wordlist	Specify a wordlist for gobuster. (The default one is big.txt from dirb's lists)"
-	echo "	 -H hostname    Specify hostname (fqdn). MUST BE IN QUOTES! (add it to /etc/hosts)"
-	echo "	 -h		Show this helper"
-	echo "   	 -s		Step-by-step: nmap scans are done first, then service port scans not in parallel, one by one."
-	echo "   	 -f		Force-scans. It doesn't perform ping to check if the host is alive."
+	echo "Usage:    ./FairScan.sh [-h] [-s] [-f] [-w WORDLIST] -H [hostname] target_ip target_name"
+	echo ""
+	echo "          target_ip         IP address of the target"
+	echo "          target_name       Target name, a directory will be created using this path"
+	echo "Options:  -w wordlist       Specify a wordlist for gobuster. (The default one is big.txt from dirb's lists)"
+	echo "          -H hostname       Specify hostname (fqdn). (add it to /etc/hosts)"
+	echo "          -h                Show this helper"
+	echo "          -s                Step-by-step: nmap scans are done first, then service port scans not in parallel, one by one."
+	echo "          -f                Force-scans. It doesn't perform ping to check if the host is alive."
+	echo "          -o                Force-scans with entered os which should be case sensitive Linux/Windows."
 	exit
 }
 
 banner () {
 	title='
 	    ______      _      _____
-	   / ____/___ _(_)____/ ___/_________ _____ 
+	   / ____/___ _(_)____/ ___/_________ _____
 	  / /_  / __ `/ / ___/\__ \/ ___/ __ `/ __ \
 	 / __/ / /_/ / / /   ___/ / /__/ /_/ / / / /
-	/_/    \__,_/_/_/   /____/\___/\__,_/_/ /_/ 
+	/_/    \__,_/_/_/   /____/\___/\__,_/_/ /_/
 
 '
 	print_blue "$title"
@@ -105,7 +107,7 @@ banner () {
 
 #check correct order of parameters and assign $ip and $name
 check_parameters () {
-	while getopts "w:hH:s:f" flag; do
+	while getopts "w:hH:s:o:f" flag; do
 	case "${flag}" in
 		H) hostname=$OPTARG;
 			print_green "Domain $hostname found";;
@@ -113,6 +115,8 @@ check_parameters () {
 		h) usage
 			exit;;
 		s) stepbystep="1";;
+		o) os=$OPTARG;
+			force="1";;
 		f) force="1";;
 		*) print_red "Wrong parameters, use -h to show the helper"
 			exit;;
@@ -135,10 +139,11 @@ check_ip () {
 		if [[ $part = *[!0-9]* ]] || [[ $part -gt 255 ]] ; then
 			print_red "[**] Wrong IP"
 			nslookup $ip
+			usage
 			exit 1
 		fi
 	done
-	if [[ counter -ne 4 ]] ; then 
+	if [[ counter -ne 4 ]] ; then
 		print_red "[**] Wrong IP" 1>&2
 		exit 1
 	fi
@@ -171,7 +176,7 @@ check_w () {
 	if [[ -n "$temp_wordlist" ]] && ! [[ -f "$temp_wordlist" ]] ; then
 		print_red "[**] Wordlist $temp_wordlist doesn't exist! " 1>&2
     		exit 1
-	fi	
+	fi
 }
 #check if hostname is set in /etc/hosts
 check_hostname () {
@@ -183,7 +188,6 @@ check_hostname () {
 		fi
 	else
 		hostname=$ip
-		print_yellow "No hostname provided, remember they need to be in quotes"
 	fi
 }
 
@@ -223,7 +227,7 @@ quick_nmap () {
 	if test -z $os ; then
 		os="Unknown"
 	fi
-	
+
 	if test $os == "Windows" ; then
 		gobuster_wordlist=$gobuster_dir_windows_wordlist
 		gobuster_extensions=$gobuster_dir_windows_extensions
@@ -234,11 +238,11 @@ quick_nmap () {
 		gobuster_wordlist=$gobuster_dir_linux_wordlist
 		gobuster_extensions=$gobuster_dir_linux_extensions
 	fi
-	
+
 	if [[ -n "$temp_wordlist" ]] ; then
 		gobuster_wordlist=$temp_wordlist
 	fi
-	banner	
+	banner
 	if [ -z "$quickPorts" ] ; then
         portzdefault="--top-ports 10000"
         read -p "Enter desired ports to quick scan  [$portzdefault]:" portsv
@@ -264,7 +268,7 @@ quick_nmap () {
 	fi
 }
 #nmap deep scan
-slow_nmap () { 
+slow_nmap () {
 	ports=$(echo "$check" | grep "/tcp" | cut -d ' ' -f1 | cut -d '/' -f1 | tr '\n' ',' | rev | cut -c 2- | rev)
 	print_yellow "[+] Running deep Nmap scan on ports: $ports..."
 	nmap -sS -A -p $ports $ip > nmap/deepNmap_$name.txt
@@ -282,13 +286,6 @@ nse_nmap () {
 	ports=$(echo "$check" | grep " open " | cut -d ' ' -f1 | cut -d '/' -f1 | tr '\n' ',' | rev | cut -c 2- | rev)
 	nmap -sV -n -O --script "$nse" -p $ports $ip > nmap/nse_$name.txt
 	print_green "[-] NSE Nmap scan done!"
-}
-#nmap Vuln scan
-vuln_nmap () {
-	print_yellow "[+] Running Vuln Nmap scan..."
-	ports=$(echo "$check" | grep " open " | cut -d ' ' -f1 | cut -d '/' -f1 | tr '\n' ',' | rev | cut -c 2- | rev)
-	nmap -sV -n -O --script=default,vuln -p $ports $ip > nmap/vuln_$name.txt
-	print_green "[-] Vuln Nmap scan done!"
 }
 
 #----------------------------------------------------------------------------------------------------------------------
@@ -344,7 +341,7 @@ robots_txt () {
 	print_yellow "[+] Searching robots.txt on port $2..."
 	robot_=$(curl -sSik "$1://$hostname:$2/robots.txt")
 	temp=$(echo $robot_ | grep "404")
-	if [[ -z $temp ]] ; then 
+	if [[ -z $temp ]] ; then
 		echo "$robot_" >> $1/robotsTxt_$2_$name.txt
 		print_green "[-] Robots.txt on port $2 FOUND!"
 	else
@@ -365,7 +362,7 @@ http_verbs () {
 	if ! [ -e $1/gobuster_dir_$2_$name.txt ] ; then
 		exit
 	fi
-	
+
 	print_yellow "[+] Enumerating http-verbs from gobuster results on port $2..."
 	not_redirected=$(cat $1/gobuster_dir_$2_$name.txt | grep "(Status: 2" | cut -d ' ' -f1)
 	redirected=$(cat $1/gobuster_dir_$2_$name.txt | grep "(Status: 3" | awk -F' ' '{print $7}' | cut -d ']' -f 1)
@@ -379,7 +376,7 @@ http_verbs () {
 		else
 			concatenation+="$1://$hostname:$2$i "
 		fi
-		
+
 	done
 	concatenation=$(echo $concatenation | xargs -n1 |sort -u)
 	for i in $concatenation; do
@@ -569,7 +566,6 @@ all_scans() {
 		echo ""
 		slow_nmap
 		nse_nmap
-		vuln_nmap
 		udp_nmap &
 		check_port_80
 		check_port_443
@@ -578,9 +574,11 @@ all_scans() {
 		#add more scans!
 	else
 		quick_nmap
-		slow_nmap 
+		echo ""
+		read -p "Do you want to run gobuster? enter one of the folowing (dir/vhost/all/N) " gobusterAnswer
+		echo ""
+		slow_nmap
 		nse_nmap
-		vuln_nmap
 		udp_nmap &
 		check_port_80
 		wait
