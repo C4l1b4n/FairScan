@@ -65,6 +65,8 @@ os=''
 hostname=''
 gobuster_wordlist=''
 gobuster_extensions=''
+userid=$SUDO_USER
+folder=$(pwd)
 
 #usage helper
 usage () {
@@ -594,3 +596,5 @@ check_input $@ #multiple check on input
 set_env #setting working envirnoment
 all_scans #do all scans
 wait #wait all children
+cd $folder
+sudo chown -R $userid:$userid $name
