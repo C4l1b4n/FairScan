@@ -573,7 +573,7 @@ all_scans() {
 	if [[ $stepbystep -ne "1" ]] ; then
 		quick_nmap
 		echo ""
-		read -t 15 -p "Do you want to run gobuster? enter one of the folowing (dir/vhost/all/N) " gobusterAnswer
+		read -t 90 -p "Do you want to run gobuster? enter one of the folowing (dir/vhost/all/N) " gobusterAnswer
 		echo ""
 		slow_nmap
 		nse_nmap
