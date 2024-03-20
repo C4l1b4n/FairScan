@@ -302,7 +302,13 @@ nse_nmap () {
 nikto_scan () {
 	print_yellow "[+] Running Nikto on port $2..."
 	nikto -port $2 -host $hostname -maxtime $nikto_maxtime -ask no 2> /dev/null >> $1/nikto_$2_$name.txt
+	temp=$(cat $1/nikto_$2_$name.txt | grep "+ 0 host(s) tested")
+	if [[ -z $temp ]] ; then
 	print_green "[-] Nikto on port $2 done!"
+	else
+		sudo rm $1/nikto_$2_$name.txt 2>/dev/null
+	print_red "[-] nikto_scan on $2 empty, deleted"
+	fi
 }
 #gobuster dir scan, $1 --> protocol, $2 --> port
 
@@ -367,6 +373,12 @@ whatweb_scan () {
 	print_yellow "[+] Running whatweb on $1://$hostname:$2..."
 	whatweb $1://$hostname:$2 -a $whatweb_level -v --color never --no-error 2>/dev/null >> $1/whatweb_$2_$name.txt
 	print_green "[-] Whatweb on $1://$hostname:$2 done!"
+	if [[ $(du $1/whatweb_$2_$name.txt | awk '{print $1}') > 1 ]] ; then
+		print_green "[+] $1/whatweb_$2_$name.txt has contents!"
+	else
+		sudo rm $1/whatweb_$2_$name.txt 2>/dev/null
+		print_red "[-] $1/whatweb_$2_$name.txt is empty, deleted"
+	fi
 }
 # enumerate http verbs, $1 --> protocol, $2 --> port
 http_verbs () {
@@ -408,7 +420,9 @@ check_smb() {
 		print_green "[-] Enum4linux done!"
 	fi
 }
-
+clean(){
+echo done
+}
 #----------------------------------------------------------------------------------------------------------------------
 ##### UTILITIES #####
 #----------------------------------------------------------------------------------------------------------------------
@@ -422,9 +436,11 @@ print_red (){
 	echo -e "\033[0;31m$1\033[0m"
 }
 print_blue (){
-        echo -e "\033[0;34m$1\033[0m"
+	echo -e "\033[0;34m$1\033[0m"
 }
-
+print_purple (){
+	echo -e "\033[0;35m$1\033[0m"
+}
 
 #----------------------------------------------------------------------------------------------------------------------
 ##### MAIN #####
@@ -586,7 +602,7 @@ all_scans() {
 	else
 		quick_nmap
 		echo ""
-		read -p "Do you want to run gobuster? enter one of the folowing (dir/vhost/all/N) " gobusterAnswer
+		read -t 90 -p "Do you want to run gobuster? enter one of the folowing (dir/vhost/all/N) " gobusterAnswer
 		echo ""
 		slow_nmap
 		nse_nmap
@@ -605,3 +621,4 @@ set_env #setting working envirnoment
 all_scans #do all scans
 wait #wait all children
 sudo chown -R $userid:$userid $folder
+print_purple "All tasks complete!"
