@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 ##                    ##
 ## Written by C4l1b4n ##
@@ -16,7 +16,7 @@ nmap_top_udp="100"
 
 ### NIKTO
 # maximum time length for the scan
-nikto_maxtime="10m"
+nikto_maxtime="3m"
 
 
 ### GOBUSTER
@@ -214,10 +214,13 @@ host_alive () {
 #set the environment
 set_env () {
 	mkdir $name
+	folder=$folder/$name
 	cd $name
+	sudo chown 2771 .
 	> note_$name.txt
 	mkdir "Scans"
 	cd "Scans"
+	sudo chown -R $userid:$userid $folder
 }
 
 
@@ -329,10 +332,10 @@ gobuster_vhost () {
 #hakrawler scan, $1 --> protocol, $2 --> port
 hakrawler_crawl () {
 	print_yellow "[+] Running hakrawler on "$1://$hostname:$2"..."
-	echo "$1://$hostname:$2" | hakrawler -d 0 -u | sort -u -o $1/hakrawler$2_$name.txt >/dev/null 2>&1
+	echo "$1://$hostname:$2" | hakrawler -insecure -d 0 -u | sort -u -o $1/hakrawler$2_$name.txt >/dev/null 2>&1
 	if ! [ -s $1/hakrawler$2_$name.txt ] ; then
 		rm $1/hakrawler$2_$name.txt
-		print_red "[-] hakrawler on port $2 found nothing!"
+		print_red "[-] hakrawler for $1://$hostname:$2 found nothing!"
 	else
 		print_green "[-] hakrawler on port $2 done!"
 	fi
@@ -342,15 +345,20 @@ hakrawler_crawl () {
 #download robots.txt, $1 --> protocol, $2 --> port
 robots_txt () {
 	print_yellow "[+] Searching robots.txt on port $2..."
-	robot_=$(curl -sSik "$1://$hostname:$2/robots.txt")
+	robot_=$(curl -sSik -m 3 "$1://$hostname:$2/robots.txt")
+	if [ $? = 0 ]; then
 	temp=$(echo $robot_ | grep "404")
-	if [[ -z $temp ]] ; then
-		echo "$robot_" >> $1/robotsTxt_$2_$name.txt
-		print_green "[-] Robots.txt on port $2 FOUND!"
+		if [[ -z $temp ]] ; then
+			echo "$robot_" >> $1/robotsTxt_$2_$name.txt
+			print_green "[-] Robots.txt on port $2 FOUND!"
+		else
+			print_red "[-] Robots.txt on port $2 NOT found."
+		fi
 	else
-		print_red "[-] Robots.txt on port $2 NOT found."
+	print_red "[-] Robots.txt on port $2 NOT found."
 	fi
 }
+
 # whatweb scan, $1 --> protocol, $2 --> port
 whatweb_scan () {
 	print_yellow "[+] Running whatweb on $1://$ip:$2..."
@@ -565,7 +573,7 @@ all_scans() {
 	if [[ $stepbystep -ne "1" ]] ; then
 		quick_nmap
 		echo ""
-		read -p "Do you want to run gobuster? enter one of the folowing (dir/vhost/all/N) " gobusterAnswer
+		read -t 15 -p "Do you want to run gobuster? enter one of the folowing (dir/vhost/all/N) " gobusterAnswer
 		echo ""
 		slow_nmap
 		nse_nmap
@@ -596,5 +604,3 @@ check_input $@ #multiple check on input
 set_env #setting working envirnoment
 all_scans #do all scans
 wait #wait all children
-cd $folder
-sudo chown -R $userid:$userid $name
