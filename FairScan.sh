@@ -604,3 +604,4 @@ check_input $@ #multiple check on input
 set_env #setting working envirnoment
 all_scans #do all scans
 wait #wait all children
+sudo chown -R $userid:$userid $folder
