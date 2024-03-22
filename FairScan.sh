@@ -387,7 +387,7 @@ http_verbs () {
 	fi
 
 	print_yellow "[+] Enumerating http-verbs from gobuster results on port $2..."
-	not_redirected=$(cat $1/gobuster_dir_$2_$name.txt | grep "(Status: 2" | cut -d ' ' -f1)
+	not_redirected=$(cat $1/gobuster_dir_$2_$name.txt | grep "(Status: 2"|"(Status: 401" | cut -d ' ' -f1)
 	redirected=$(cat $1/gobuster_dir_$2_$name.txt | grep "(Status: 3" | awk -F' ' '{print $7}' | cut -d ']' -f 1)
 	concatenation=""
 	for i in $not_redirected ; do
